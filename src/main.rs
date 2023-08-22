@@ -5,12 +5,15 @@ use axum::{
     Json, 
     Router,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::net::SocketAddr;
+use serde_json::json;
 
 #[tokio::main]
 async fn main() {
-    let app = Router::new().route("/", get(handler));
+    let app = Router::new()
+        .route("/", get(helthcheck_handle))
+        .route("/login", post(login_hanlde));
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
 
     axum::Server::bind(&addr)
@@ -19,6 +22,22 @@ async fn main() {
         .unwrap();
 }
 
-async fn handler() -> &'static str {
-    "Hello axum"
+#[derive(Deserialize, Debug)]
+struct User {
+    name: String,
+    password: String,
+}
+
+async fn helthcheck_handle() -> impl IntoResponse {
+    (
+        StatusCode::OK,
+        Json(json!({"message":"healthcheck ok"})),
+    )
+}
+
+async fn login_hanlde(Json(user): Json<User>) -> impl IntoResponse {
+    (
+        StatusCode::OK,
+        Json(json!({"name": user.name, "pass": user.password}))
+    )
 }
